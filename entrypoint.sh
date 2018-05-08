@@ -1,0 +1,27 @@
+#!/bin/sh
+
+if [ ! -f /initialized ]; then
+
+    /usr/bin/ssh-keygen -A
+
+    if [ -z "$USER" ]; then
+        USER="anonymous"
+    fi
+    if [ -z "$PASSWORD" ]; then
+        PASSWORD="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c16)"
+    fi
+    adduser -D -s /bin/false $USER
+    echo "$USER:$PASSWORD" | chpasswd
+
+    if [ ! -z "$AUTHORIZED_KEYS" ]; then
+        HOME=/home/$USER
+        mkdir $HOME/.ssh
+        chmod 0700 $HOME/.ssh
+        echo "$AUTHORIZED_KEYS" > $HOME/.ssh/authorized_keys
+        chown -R $USER:$USER $HOME/.ssh
+    fi
+
+    touch /initialized
+fi
+
+exec /usr/sbin/sshd -D -e -f /sshd_config
