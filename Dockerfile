@@ -6,4 +6,5 @@ COPY sshd_config /
 COPY entrypoint.sh /
 
 EXPOSE 22
-CMD ["/bin/sh", "/entrypoint.sh"]
+ENTRYPOINT [ "/bin/sh", "/entrypoint.sh" ]
+CMD [ "/usr/sbin/sshd", "-D", "-e", "-f", "/sshd_config" ]

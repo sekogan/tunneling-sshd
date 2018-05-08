@@ -24,4 +24,4 @@ if [ ! -f /initialized ]; then
     touch /initialized
 fi
 
-exec /usr/sbin/sshd -D -e -f /sshd_config
+[ $1 ] && exec "$@"
