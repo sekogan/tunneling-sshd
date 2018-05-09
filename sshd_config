@@ -11,7 +11,5 @@ AllowTcpForwarding yes
 GatewayPorts no
 X11Forwarding no
 
-AllowUsers anonymous
-ChrootDirectory %h
 PermitTTY no
 ForceCommand /bin/false

@@ -66,6 +66,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
     apt-get install -y docker.io
+    apt-get install -y sshpass
     echo "sudo -i" >>/home/vagrant/.bashrc
     echo "cd /test" >>/root/.bashrc
   SHELL

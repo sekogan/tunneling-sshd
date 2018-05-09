@@ -12,6 +12,7 @@ if [ ! -f /initialized ]; then
     fi
     adduser -D -s /bin/false $USER
     echo "$USER:$PASSWORD" | chpasswd
+    echo "AllowUsers $USER" >> /sshd_config
 
     if [ ! -z "$AUTHORIZED_KEYS" ]; then
         HOME=/home/$USER
