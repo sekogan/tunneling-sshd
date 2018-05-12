@@ -8,7 +8,7 @@ PermitRootLogin no
 
 AllowAgentForwarding no
 AllowTcpForwarding yes
-GatewayPorts no
+GatewayPorts yes
 X11Forwarding no
 
 PermitTTY no
