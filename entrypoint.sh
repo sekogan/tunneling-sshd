@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 if [ ! -f /initialized ]; then
 
     /usr/bin/ssh-keygen -A
@@ -12,15 +14,20 @@ if [ ! -f /initialized ]; then
     fi
     adduser -D -s /bin/false $USER
     echo "$USER:$PASSWORD" | chpasswd
+    unset PASSWORD
     echo "AllowUsers $USER" >> /sshd_config
 
+    HOME=/home/$USER
+    mkdir -p $HOME/.ssh
     if [ ! -z "$AUTHORIZED_KEYS" ]; then
-        HOME=/home/$USER
-        mkdir $HOME/.ssh
-        chmod 0700 $HOME/.ssh
         echo "$AUTHORIZED_KEYS" > $HOME/.ssh/authorized_keys
-        chown -R $USER:$USER $HOME/.ssh
+        unset AUTHORIZED_KEYS
+    elif [ ! -z "$AUTHORIZED_KEYS_PATH" ]; then
+        cp "$AUTHORIZED_KEYS_PATH" $HOME/.ssh/authorized_keys
+        unset AUTHORIZED_KEYS_PATH
     fi
+    chmod 0700 $HOME/.ssh
+    chown -R $USER:$USER $HOME/.ssh
 
     touch /initialized
 fi

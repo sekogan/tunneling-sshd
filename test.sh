@@ -3,6 +3,8 @@ set -Eeuo pipefail
 
 docker_image_name="test_image"
 docker_container_name="test_container"
+test_string="expected"
+test_file="test-file"
 
 # Setup
 
@@ -11,6 +13,7 @@ function cleanup() {
   docker stop $docker_container_name &>/dev/null || true
   docker rm $docker_container_name &>/dev/null || true
   docker rmi -f $docker_image_name &>/dev/null || true
+  [ -f $test_file ] && rm $test_file || true
 }
 
 function print_result() {
@@ -22,7 +25,8 @@ trap "print_result 'FAILED'" ERR
 
 cleanup
 
-echo '~~~ Building Docker test image'
+echo '~~~ Initializing...'
+echo "$test_string" > $test_file
 docker build --tag $docker_image_name .
 
 # Tests
@@ -35,6 +39,11 @@ docker run --rm $docker_image_name test -f /sshd_config
 
 echo "--- Host key is generated"
 docker run --rm $docker_image_name test -f /etc/ssh/ssh_host_rsa_key
+
+echo "--- authorized_keys is written"
+docker run --rm -e USER=user -e AUTHORIZED_KEYS="$test_string" $docker_image_name grep "$test_string" /home/user/.ssh/authorized_keys
+docker run --rm -e USER=user -e AUTHORIZED_KEYS_PATH="/test/$test_file" -v "$(pwd):/test" $docker_image_name grep "$test_string" /home/user/.ssh/authorized_keys
+
 
 echo "--- TCP connections are forwarded"
 echo "Starting the container..."
