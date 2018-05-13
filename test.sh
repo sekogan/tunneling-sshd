@@ -47,36 +47,42 @@ docker run --rm -e USER=user -e AUTHORIZED_KEYS_PATH="/test/$test_file" -v "$(pw
 
 echo "--- TCP connections are forwarded"
 echo "Starting the container..."
-docker run -d --rm -p 15000:22 -e USER=user -e PASSWORD=12345 \
+docker run -d -p 15000:22 -e USER=user -e PASSWORD=12345 \
   --name $docker_container_name $docker_image_name
-sleep 2
-echo "Starting client side ssh..."
-sshpass -p 12345 ssh -p 15000 -N -D 15001 user@localhost \
-  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null &
-sleep 1
-echo "Testing the connection..."
-curl --socks5-hostname localhost:15001 https://github.com >/dev/null
-echo "Cleaning up..."
+retries=10
+while [ $retries -ne 0 ]; do
+  (( retries-- ))
+  sleep 1
+  echo "Starting client side ssh..."
+  killall ssh || true
+  sshpass -p 12345 ssh -p 15000 -N -D 15001 user@localhost \
+    -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null &
+  sleep 1
+  echo "Testing the connection..."
+  curl --socks5-hostname localhost:15001 https://github.com &>/dev/null || continue
+  break
+done
+test $retries -ne 0
 killall ssh
-docker stop $docker_container_name
 
 
 echo "--- TCP connections are forwarded after restart"
-echo "Starting the container..."
-docker run -d -p 15000:22 -e USER=user -e PASSWORD=12345 \
-  --name $docker_container_name $docker_image_name
-sleep 2
 echo "Restarting the container..."
 docker stop $docker_container_name
-sleep 1
 docker start $docker_container_name
-sleep 1
-echo "Starting client side ssh..."
-sshpass -p 12345 ssh -p 15000 -N -D 15001 user@localhost \
-  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null &
-sleep 1
-echo "Testing the connection..."
-curl --socks5-hostname localhost:15001 https://github.com >/dev/null
+retries=10
+while [ $retries -ne 0 ]; do
+  (( retries-- ))
+  echo "Starting client side ssh..."
+  killall ssh || true
+  sshpass -p 12345 ssh -p 15000 -N -D 15001 user@localhost \
+    -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null &
+  sleep 1
+  echo "Testing the connection..."
+  curl --socks5-hostname localhost:15001 https://github.com &>/dev/null || continue
+  break
+done
+test $retries -ne 0
 echo "Cleaning up..."
 killall ssh
 docker stop $docker_container_name

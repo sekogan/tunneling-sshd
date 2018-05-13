@@ -2,6 +2,9 @@
 
 set -e
 
+apk update
+apk upgrade
+
 if [ ! -f /initialized ]; then
 
     /usr/bin/ssh-keygen -A
